@@ -4,6 +4,8 @@ import {
   getDocs, 
   doc, 
   updateDoc, 
+  deleteDoc,
+  getDoc,
   query, 
   where, 
   orderBy, 
@@ -13,6 +15,8 @@ import { db } from '../firebaseConfig';
 import { Producto, Pedido, ProductoEnPedido } from '../types';
 
 // Servicios para Productos
+
+// Obtener todos los productos
 export const obtenerProductos = async (): Promise<Producto[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, 'productos'));
@@ -27,6 +31,60 @@ export const obtenerProductos = async (): Promise<Producto[]> => {
   }
 };
 
+// Obtener un producto por ID
+export const obtenerProductoPorId = async (productoId: string): Promise<Producto | null> => {
+  try {
+    const docRef = doc(db, 'productos', productoId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Producto;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error al obtener producto por ID:', error);
+    throw error;
+  }
+};
+
+// Crear un nuevo producto
+export const crearProducto = async (producto: Omit<Producto, 'id'>): Promise<string> => {
+  try {
+    const docRef = await addDoc(collection(db, 'productos'), producto);
+    console.log('Producto creado con ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error al crear producto:', error);
+    throw error;
+  }
+};
+
+// Actualizar un producto existente
+export const actualizarProducto = async (productoId: string, datosActualizados: Partial<Omit<Producto, 'id'>>): Promise<void> => {
+  try {
+    const productoRef = doc(db, 'productos', productoId);
+    await updateDoc(productoRef, datosActualizados);
+    console.log('Producto actualizado:', productoId);
+  } catch (error) {
+    console.error('Error al actualizar producto:', error);
+    throw error;
+  }
+};
+
+// Eliminar un producto
+export const eliminarProducto = async (productoId: string): Promise<void> => {
+  try {
+    const productoRef = doc(db, 'productos', productoId);
+    await deleteDoc(productoRef);
+    console.log('Producto eliminado:', productoId);
+  } catch (error) {
+    console.error('Error al eliminar producto:', error);
+    throw error;
+  }
+};
+
+// Actualizar solo el stock de un producto (mantener retrocompatibilidad)
 export const actualizarStockProducto = async (productoId: string, nuevoStock: number): Promise<void> => {
   try {
     const productoRef = doc(db, 'productos', productoId);

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { crearProducto, obtenerProductos } from '../services/firebase';
 
 const productosEjemplo = [
   {
@@ -51,23 +50,58 @@ const productosEjemplo = [
 export const PoblarBaseDatos: React.FC = () => {
   const [poblando, setPoblando] = useState(false);
 
+  const verificarProductosExistentes = async (): Promise<boolean> => {
+    try {
+      const productos = await obtenerProductos();
+      return productos.length > 0;
+    } catch (error) {
+      console.error('Error al verificar productos:', error);
+      return false;
+    }
+  };
+
   const poblarBaseDatos = async () => {
     setPoblando(true);
     try {
-      console.log('Iniciando poblado de base de datos...');
+      console.log('Verificando productos existentes...');
+      const hayProductos = await verificarProductosExistentes();
       
-      for (const producto of productosEjemplo) {
-        const docRef = await addDoc(collection(db, 'productos'), producto);
-        console.log(`Producto agregado con ID: ${docRef.id} - ${producto.nombre}`);
+      if (hayProductos) {
+        Alert.alert(
+          'Productos existentes',
+          'Ya hay productos en la base de datos. ¿Quieres agregar más productos de ejemplo?',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Agregar', onPress: () => agregarProductos() }
+          ]
+        );
+        setPoblando(false);
+        return;
       }
-      
-      Alert.alert('Éxito', 'Base de datos poblada exitosamente!');
-      console.log('Base de datos poblada exitosamente!');
+
+      await agregarProductos();
     } catch (error) {
       console.error('Error al poblar la base de datos:', error);
       Alert.alert('Error', 'No se pudo poblar la base de datos');
     } finally {
       setPoblando(false);
+    }
+  };
+
+  const agregarProductos = async () => {
+    try {
+      console.log('Iniciando poblado de base de datos...');
+      
+      for (const producto of productosEjemplo) {
+        const productoId = await crearProducto(producto);
+        console.log(`Producto agregado con ID: ${productoId} - ${producto.nombre}`);
+      }
+      
+      Alert.alert('Éxito', 'Productos agregados exitosamente!');
+      console.log('Base de datos poblada exitosamente!');
+    } catch (error) {
+      console.error('Error al agregar productos:', error);
+      Alert.alert('Error', 'No se pudieron agregar los productos');
     }
   };
 
