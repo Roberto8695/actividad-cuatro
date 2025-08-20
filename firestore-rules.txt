@@ -1,0 +1,25 @@
+// Reglas de seguridad de Firestore para permitir lecturas y escrituras
+// Ve a Firebase Console > Firestore Database > Rules y reemplaza las reglas existentes con estas:
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir lectura y escritura para la colección productos
+    match /productos/{document} {
+      allow read, write: if true;
+    }
+    
+    // Permitir lectura y escritura para la colección pedidos
+    match /pedidos/{document} {
+      allow read, write: if true;
+    }
+  }
+}
+
+// NOTA: Estas reglas permiten acceso completo sin autenticación.
+// En una aplicación de producción, deberías implementar autenticación
+// y reglas más restrictivas como:
+//
+// match /pedidos/{document} {
+//   allow read, write: if request.auth != null && request.auth.uid == resource.data.usuarioId;
+// }
